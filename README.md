@@ -9,7 +9,7 @@ A web-based platform that recommends Fujifilm film simulation recipes based on s
 - **Smart Recommendations**: Algorithm scores and ranks recipes based on your inputs
 - **Save Favorites**: Save your favorite recipes for quick access (stored in browser)
 - **Compare Recipes**: Compare up to 4 recipes side-by-side to see setting differences
-- **20 Curated Recipes**: Popular Fujifilm recipes including Portra 400, Kodachrome, Cinematic looks, and more
+- **44 Curated Recipes**: Sourced from FujiXWeekly and FujifilmSimulations, including Portra 400, Kodachrome, Cinematic looks, and more
 - **Detailed Settings**: Full camera settings for each recipe including WB, DR, grain, color chrome, etc.
 
 ## Tech Stack
@@ -116,28 +116,13 @@ A web-based platform that recommends Fujifilm film simulation recipes based on s
 - `POST /api/recommend/natural` - Natural language recommendation
 - `GET /api/health` - Health check
 
-## Included Recipes
+## Recipe Sources
 
-1. Classic Chrome Everyday
-2. Portra 400 Inspired
-3. Kodachrome Vibrant
-4. Cinematic Teal & Orange
-5. High Contrast B&W
-6. Soft Pastel Dream
-7. Superia 400 Nostalgic
-8. Moody Street Night
-9. Golden Hour Portrait
-10. Cool Urban Modern
-11. Autumn Warmth
-12. Noir Classic
-13. Bright & Airy
-14. Vintage Fade
-15. Nature Documentary
-16. Rainy Day Blue
-17. Warm Film Portrait
-18. Beach Summer
-19. Low Light Indoor
-20. Harsh Daylight
+The app includes 44 curated recipes from popular Fujifilm photography communities:
+- **FujiXWeekly** - Classic film emulations and creative looks
+- **FujifilmSimulations** - Community-submitted recipes with sample images
+
+Each recipe includes full camera settings: film simulation, white balance, dynamic range, highlight/shadow, color, sharpness, noise reduction, clarity, grain effect, and color chrome settings.
 
 ## Project Structure
 
@@ -176,6 +161,102 @@ Fuji Recipe Finder/
 │   └── package.json
 └── README.md
 ```
+
+## Deployment to Google Cloud Run
+
+### How It Works
+
+```
+User visits fujirecipefinder.com
+        ↓
+DNS (A Records) → Points to Google Cloud IPs
+        ↓
+Google Cloud Run → Routes to your container
+        ↓
+Docker Container → Express serves React + API
+        ↓
+SQLite Database → Returns recipe data
+```
+
+### Prerequisites
+- Google Cloud account with billing enabled
+- `gcloud` CLI installed
+- Domain name (optional)
+
+### Deploy Steps
+
+1. **Authenticate with Google Cloud:**
+   ```bash
+   gcloud auth login
+   ```
+
+2. **Create a new project:**
+   ```bash
+   gcloud projects create fuji-recipe-finder --name="Fuji Recipe Finder"
+   gcloud config set project fuji-recipe-finder
+   ```
+
+3. **Enable billing:**
+   Go to https://console.cloud.google.com/billing/linkedaccount?project=fuji-recipe-finder and link a billing account (required even for free tier)
+
+4. **Enable required APIs:**
+   ```bash
+   gcloud services enable cloudbuild.googleapis.com run.googleapis.com artifactregistry.googleapis.com
+   ```
+
+5. **Deploy:**
+   ```bash
+   gcloud run deploy fuji-recipe-finder \
+     --source . \
+     --region us-central1 \
+     --allow-unauthenticated \
+     --memory 512Mi \
+     --min-instances 0 \
+     --max-instances 2
+   ```
+
+6. **Get your URL:**
+   After deployment, you'll receive a URL like `https://fuji-recipe-finder-XXXXX.us-central1.run.app`
+
+### Custom Domain Setup
+
+1. **Verify domain ownership:**
+   - Go to https://www.google.com/webmasters/verification/home
+   - Add your domain and get a TXT record
+   - Add the TXT record in your domain registrar
+
+2. **Create domain mapping:**
+   ```bash
+   gcloud beta run domain-mappings create \
+     --service fuji-recipe-finder \
+     --domain yourdomain.com \
+     --region us-central1
+   ```
+
+3. **Add DNS records** in your domain registrar:
+   | Type | Host | Value |
+   |------|------|-------|
+   | A | @ | 216.239.32.21 |
+   | A | @ | 216.239.34.21 |
+   | A | @ | 216.239.36.21 |
+   | A | @ | 216.239.38.21 |
+
+4. **Wait for SSL certificate provisioning** (5-20 minutes)
+
+### Cost Estimates
+
+Cloud Run free tier includes:
+- 2 million requests/month
+- 360,000 GB-seconds of memory
+- 180,000 vCPU-seconds
+
+For a low-traffic personal project, expect **$0-5/month**.
+
+## Credits
+
+- **Recipes**: Sourced from [FujiXWeekly](https://fujixweekly.com) and [FujifilmSimulations](https://fujifilmsimulations.com)
+- **Sample Images**: From the respective recipe sources
+- **Background Image**: © 2025 Marini Qian
 
 ## License
 
